@@ -1,40 +1,55 @@
-import json
 import os
 import boto3
+import json
 
-cognito = boto3.client('cognito-idp')
+cognito_client = boto3.client('cognito-idp')
 
-USER_POOL_ID = os.getenv('USER_POOL_ID')
-CLIENT_ID = os.getenv('CLIENT_ID')
+user_pool_id = os.getenv('USER_POOL_ID')
 
 def lambda_handler(event, context):
-    body = json.loads(event['body'])
+    print(event)
+    body = json.loads(event.get("body", "{}"))
 
-    identifier = body.get('cpf') or body.get('email')
+    email = body.get('email')
+    name = body.get('name')
+    cpf = body.get('cpf')
 
-    if not identifier:
+    username = ''
+    user_attributes = []
+    if cpf:
+        username = cpf
+        user_attributes.append({ 'Name': 'custom:CPF', 'Value': cpf })
+    elif email and name:
+        username = email
+        user_attributes.extend([
+            { 'Name': 'email', 'Value': email },
+            { 'Name': 'email_verified', 'Value': 'true' },
+            { 'Name': 'name', 'Value': name },
+        ])
+    else:
         return {
             'statusCode': 400,
             'headers': { 'Content-Type': 'application/json' },
-            'body': "{ 'message': 'Identifier (CPF or email) is required' }",
+            'body': "{ 'message': 'Please provide either CPF or both Email and Name' }"
         }
 
     try:
-        response = cognito.admin_initiate_auth(
-            UserPoolId = USER_POOL_ID,
-            ClientId = CLIENT_ID,
-            AuthFlow = 'CUSTOM_AUTH',
-            AuthParameters = { 'USERNAME': identifier }
+        response = cognito_client.admin_create_user(
+            UserPoolId = user_pool_id,
+            Username = username,
+            UserAttributes = user_attributes,
+            MessageAction = 'SUPPRESS'
         )
+        print(response)
         return {
             'statusCode': 200,
             'headers': { 'Content-Type': 'application/json' },
-            'body': response,
+            'body': "{ 'message': 'User created successfully' }"
         }
-    except cognito.exceptions.ClientError as e:
+    except Exception as e:
         print(e)
         return {
             'statusCode': 500,
             'headers': { 'Content-Type': 'application/json' },
-            'body': "{ 'message': 'Error initiating authentication' }",
+            'body': "{ 'message': 'Error creating user' }"
         }
