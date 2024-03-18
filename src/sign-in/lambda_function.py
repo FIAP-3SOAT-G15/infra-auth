@@ -1,15 +1,17 @@
 import json
+import logging
 import os
+
 import boto3
+import botocore.exceptions
 
 cognito = boto3.client('cognito-idp')
 
-USER_POOL_ID = os.getenv('USER_POOL_ID')
-CLIENT_ID = os.getenv('CLIENT_ID')
+USER_POOL_ID = os.environ.get('USER_POOL_ID')
+CLIENT_ID = os.environ.get('CLIENT_ID')
 
 
 def lambda_handler(event, context):
-    print(event)
     body = json.loads(event['body'])
 
     identifier = body.get('cpf') or body.get('email')
@@ -33,10 +35,27 @@ def lambda_handler(event, context):
             'headers': {'Content-Type': 'application/json'},
             'body': json.dumps(response),
         }
-    except cognito.exceptions.ClientError as e:
-        print(e)
-        return {
-            'statusCode': 500,
-            'headers': {'Content-Type': 'application/json'},
-            'body': "{ 'message': 'Error initiating authentication' }",
-        }
+
+    except botocore.exceptions.ClientError as error:
+        logging.error(error)
+
+        if error.response['Error']['Code'] == 'UserNotFoundException':
+            return {
+                'statusCode': 401,
+                'headers': {'Content-Type': 'application/json'},
+                'body': "{ 'message': 'Unauthorized' }",
+            }
+
+        return internal_error(error)
+
+    except Exception as error:
+        return internal_error(error)
+
+
+def internal_error(error):
+    logging.error(error)
+    return {
+        'statusCode': 500,
+        'headers': {'Content-Type': 'application/json'},
+        'body': "{ 'message': 'Internal server error' }",
+    }
