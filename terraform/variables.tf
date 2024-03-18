@@ -1,11 +1,11 @@
 variable "region" {
-  type = string
+  type    = string
+  default = "us-east-1"
 }
 
 variable "tags" {
   type = map(string)
-}
-
-variable "account_id" {
-  type = string
+  default = {
+    managed_by_terraform = true
+  }
 }
