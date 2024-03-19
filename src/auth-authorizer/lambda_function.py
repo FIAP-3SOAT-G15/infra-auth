@@ -5,11 +5,11 @@ import requests
 from urllib.request import urlopen
 
 
-AWS_REGION = os.environ.get('REGION')
+REGION = os.environ.get('REGION')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 APP_CLIENT_ID = os.environ.get('CLIENT_ID')
 
-KEYS_URL = f'https://cognito-idp.{AWS_REGION}.amazonaws.com/{USER_POOL_ID}/.well-known/jwks.json'
+KEYS_URL = f'https://cognito-idp.{REGION}.amazonaws.com/{USER_POOL_ID}/.well-known/jwks.json'
 KEYS = requests.get(KEYS_URL).json()['keys']
 
 def lambda_handler(event, context):
