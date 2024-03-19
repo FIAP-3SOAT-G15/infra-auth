@@ -47,7 +47,7 @@ def lambda_handler(event, context):
         }
 
     headers = {"Content-Type": "application/json"}
-    url = f"https://{LOAD_BALANCER_DNS}:{TARGET_PORT}/live/customers"
+    url = f"http://{LOAD_BALANCER_DNS}:{TARGET_PORT}/live/customers"
     customer_id = requests.post(url, json=payload, headers=headers).json()["id"]
     user_attributes.append({"Name": "custom:CUSTOMER_ID", "Value": customer_id})
 
