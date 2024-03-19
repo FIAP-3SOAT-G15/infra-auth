@@ -65,3 +65,9 @@ def lambda_handler(event, context):
         UserPoolId=USER_POOL_ID, Username=username, GroupName="customer"
     )
     logging.info(response)
+
+    return {
+        "statusCode": 200,
+        "headers": {"Content-Type": "application/json"},
+        "body": json.dumps({ 'customer_id': customer_id }),
+    }
