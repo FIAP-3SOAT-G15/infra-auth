@@ -55,6 +55,11 @@ resource "aws_cognito_user_pool" "user_pool" {
   depends_on = [
     module.lambda_auth_challenge
   ]
+
+  lifecycle {
+    create_before_destroy = true
+  
+  }
 }
 
 resource "aws_cognito_user_group" "admin" {
