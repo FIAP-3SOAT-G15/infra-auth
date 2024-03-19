@@ -15,16 +15,19 @@ KEYS = requests.get(KEYS_URL).json()['keys']
 def lambda_handler(event, context):
     print('event: ', event)
 
-
     token = event['authorizationToken']
     if token.startswith('Bearer '):
         token = token.split(' ')[1]
     
-    headers = jwt.get_unverified_header(token)
-    key = [k for k in KEYS if k['kid'] == headers['kid']][0]
-    public_key = RSAAlgorithm.from_jwk(key)
-    claims = jwt.decode(token, public_key, algorithms = ['RS256'], audience = APP_CLIENT_ID)
-    print('claims: ', claims)
+    try:
+        headers = jwt.get_unverified_header(token)
+        key = [k for k in KEYS if k['kid'] == headers['kid']][0]
+        public_key = RSAAlgorithm.from_jwk(key)
+        claims = jwt.decode(token, public_key, algorithms = ['RS256'], audience = APP_CLIENT_ID)
+        print('claims: ', claims)
+    except Exception as e:
+        print('Error: ', e)
+        return generate_policy('user', 'Deny', event['methodArn'])    
 
     groups = claims.get('cognito:groups', [])
     print('groups: ', groups)
