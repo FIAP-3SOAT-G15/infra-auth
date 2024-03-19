@@ -94,7 +94,8 @@ data "aws_lb" "load_balancer" {
 }
 
 resource "aws_security_group" "auth_sign_up" {
-  name = "auth_sign_up"
+  name   = "auth_sign_up"
+  vpc_id = data.terraform_remote_state.tech-challenge.outputs.vpc_id
 
   egress {
     from_port   = 0
