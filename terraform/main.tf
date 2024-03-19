@@ -22,6 +22,12 @@ data "terraform_remote_state" "rds" {
   }
 }
 
+resource "null_resource" "always_run" {
+  triggers = {
+    timestamp = "${timestamp()}"
+  }
+}
+
 resource "aws_cognito_user_pool" "user_pool" {
   name = "self-order-management"
 
@@ -57,8 +63,9 @@ resource "aws_cognito_user_pool" "user_pool" {
   ]
 
   lifecycle {
-    create_before_destroy = true
-  
+    replace_triggered_by = [
+      null_resource.always_run
+    ]
   }
 }
 
