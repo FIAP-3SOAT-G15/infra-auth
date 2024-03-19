@@ -38,6 +38,7 @@ def generate_policy(principal_id, effect, resource):
             }]
         }
         auth_response['policyDocument'] = policy_document
+    print('auth_response: ', auth_response)
     return auth_response
 
 def extract_and_decode_token(event):
