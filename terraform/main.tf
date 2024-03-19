@@ -40,6 +40,12 @@ resource "aws_cognito_user_pool" "user_pool" {
     }
   }
 
+  schema {
+    attribute_data_type = "String"
+    name                = "CUSTOMER_ID"
+    required            = false
+  }
+
   lambda_config {
     define_auth_challenge = module.lambda_auth_challenge.lambda_function_arn
   }
@@ -83,6 +89,21 @@ data "aws_secretsmanager_secret" "rds_secret" {
   arn = data.terraform_remote_state.rds.outputs.db_instance_master_user_secret_arn
 }
 
+data "aws_lb" "load_balancer" {
+  name = var.load_balancer_name
+}
+
+resource "aws_security_group" "auth_sign_up" {
+  name = "auth_sign_up"
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 module "lambda_auth_sign_up" {
   source  = "terraform-aws-modules/lambda/aws"
   version = "7.2.2"
@@ -97,9 +118,9 @@ module "lambda_auth_sign_up" {
   }
 
   environment_variables = {
-    USER_POOL_ID  = aws_cognito_user_pool.user_pool.id
-    RDS_PARAM_ID  = data.aws_ssm_parameter.rds_param.name
-    RDS_SECRET_ID = data.aws_secretsmanager_secret.rds_secret.name
+    USER_POOL_ID      = aws_cognito_user_pool.user_pool.id
+    LOAD_BALANCER_DNS = data.aws_lb.load_balancer.dns_name
+    TARGET_PORT       = var.target_group_port
   }
 
   attach_policy_statements = true
@@ -116,28 +137,9 @@ module "lambda_auth_sign_up" {
     }
   }
 
-
-  vpc_subnet_ids = data.terraform_remote_state.tech-challenge.outputs.private_subnets
-
-  attach_policies = true
-  policies = [
-    data.terraform_remote_state.rds.outputs.rds_secrets_read_only_policy_arn,
-    data.terraform_remote_state.rds.outputs.rds_params_read_only_policy_arn
-  ]
-  number_of_policies = 2
-
-  layers = [
-    # AWS Parameters and Secrets Lambda Extension for us-east-1
-    # https://docs.aws.amazon.com/secretsmanager/latest/userguide/retrieving-secrets_lambda.html
-    # https://docs.aws.amazon.com/systems-manager/latest/userguide/ps-integration-lambda-extensions.html#ps-integration-lambda-extensions-add
-    "arn:aws:lambda:us-east-1:177933569100:layer:AWS-Parameters-and-Secrets-Lambda-Extension:11"
-  ]
-
-  tags = var.tags
-
-  depends_on = [
-    aws_cognito_user_pool.user_pool
-  ]
+  vpc_subnet_ids         = data.terraform_remote_state.tech-challenge.outputs.private_subnets
+  vpc_security_group_ids = [aws_security_group.auth_sign_up.id]
+  attach_network_policy  = true
 }
 
 module "lambda_auth_sign_in" {
