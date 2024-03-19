@@ -48,7 +48,9 @@ def lambda_handler(event, context):
 
     headers = {"Content-Type": "application/json"}
     url = f"http://{LOAD_BALANCER_DNS}:{TARGET_PORT}/live/customers"
-    customer_id = requests.post(url, json=payload, headers=headers).json()["id"]
+    response = requests.post(url, json=payload, headers=headers).json()
+    print(response)
+    customer_id = response["id"]
     user_attributes.append({"Name": "custom:CUSTOMER_ID", "Value": customer_id})
 
     response = cognito_client.admin_create_user(
