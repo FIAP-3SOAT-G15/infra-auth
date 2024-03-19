@@ -199,7 +199,7 @@ module "lambda_auth_authorizer" {
   source_path = "../src/auth-authorizer"
 
   environment_variables = {
-    AWS_REGION   = var.region
+    REGION       = var.region
     USER_POOL_ID = aws_cognito_user_pool.user_pool.id
     CLIENT_ID    = aws_cognito_user_pool_client.client.id
   }
