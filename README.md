@@ -17,3 +17,7 @@ User pool do Cognito com grupos para clientes e administradores, funções Lambd
 │       └── provisioning.yml  # provisionamento de IaC com Terraform
 └── terraform/                # IaC com Terraform
 ```
+
+## Diagrama
+
+![auth_diagram](https://github.com/FIAP-3SOAT-G15/infra-auth/assets/22407515/7da47dfe-72ad-4fc6-8802-52b2c6e7fd88)
