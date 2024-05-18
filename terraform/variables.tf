@@ -10,10 +10,10 @@ variable "tags" {
   }
 }
 
-variable "load_balancer_name" {
-  description = "The name of the load balancer"
+variable "orders_load_balancer_name" {
+  description = "The name of the load balancer for the Orders Microservice"
   type        = string
-  default     = "self-order-management-lb"
+  default     = "orders-load-balancer"
 }
 
 variable "target_group_port" {

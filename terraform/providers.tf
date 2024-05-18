@@ -7,7 +7,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket = "fiap-3soat-g15-infra-lambda-state"
+    bucket = "fiap-3soat-g15-iac-auth"
     key    = "live/terraform.tfstate"
     region = "us-east-1"
   }
