@@ -6,17 +6,7 @@ data "terraform_remote_state" "tech-challenge" {
   backend = "s3"
 
   config = {
-    bucket = "fiap-3soat-g15-infra-tech-challenge-state"
-    key    = "live/terraform.tfstate"
-    region = var.region
-  }
-}
-
-data "terraform_remote_state" "rds" {
-  backend = "s3"
-
-  config = {
-    bucket = "fiap-3soat-g15-infra-db-state"
+    bucket = "fiap-3soat-g15-iac-tech-challenge"
     key    = "live/terraform.tfstate"
     region = var.region
   }
@@ -24,7 +14,7 @@ data "terraform_remote_state" "rds" {
 
 resource "null_resource" "always_run" {
   triggers = {
-    timestamp = "${timestamp()}"
+    timestamp = timestamp()
   }
 }
 
@@ -93,16 +83,8 @@ resource "aws_cognito_user_pool_client" "client" {
   user_pool_id = aws_cognito_user_pool.user_pool.id
 }
 
-data "aws_ssm_parameter" "rds_param" {
-  name = data.terraform_remote_state.rds.outputs.rds_ssm_parameter_name
-}
-
-data "aws_secretsmanager_secret" "rds_secret" {
-  arn = data.terraform_remote_state.rds.outputs.db_instance_master_user_secret_arn
-}
-
-data "aws_lb" "load_balancer" {
-  name = var.load_balancer_name
+data "aws_lb" "orders_load_balancer" {
+  name = var.orders_load_balancer_name
 }
 
 resource "aws_security_group" "auth_sign_up" {
@@ -132,7 +114,7 @@ module "lambda_auth_sign_up" {
 
   environment_variables = {
     USER_POOL_ID      = aws_cognito_user_pool.user_pool.id
-    LOAD_BALANCER_DNS = data.aws_lb.load_balancer.dns_name
+    LOAD_BALANCER_DNS = data.aws_lb.orders_load_balancer.dns_name
     TARGET_PORT       = var.target_group_port
   }
 
