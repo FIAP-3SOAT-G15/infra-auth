@@ -1,15 +1,11 @@
-module "secrets_manager" {
-  source  = "terraform-aws-modules/secrets-manager/aws"
-  version = "1.1.2"
+module "cognito_ssm_param" {
+  source = "terraform-aws-modules/ssm-parameter/aws"
+  name   = "/live/cognito"
+  type   = "String"
 
-  name = "live/cognito"
-
-  ignore_secret_changes   = true
-  recovery_window_in_days = 0
-
-  secret_string = jsonencode({
-    "issuer-uri"  = "https://cognito-idp.${var.region}.amazonaws.com/${aws_cognito_user_pool.user_pool.id}"
-    "jwk-set-uri" = "https://cognito-idp.${var.region}.amazonaws.com/${aws_cognito_user_pool.user_pool.id}/.well-known/jwks.json"
+  value = jsonencode({
+    "issueruri": "https://cognito-idp.${var.region}.amazonaws.com/${aws_cognito_user_pool.user_pool.id}"
+    "jwkseturi": "https://cognito-idp.${var.region}.amazonaws.com/${aws_cognito_user_pool.user_pool.id}/.well-known/jwks.json"
   })
 
   tags = var.tags
@@ -24,10 +20,16 @@ resource "aws_iam_policy" "cognito_secrets_read_only_policy" {
       {
         Effect = "Allow"
         Action = [
-          "secretsmanager:DescribeSecret",
-          "secretsmanager:GetSecretValue"
-        ],
-        Resource = module.secrets_manager.secret_arn
+          "ssm:GetParameter",
+        ]
+        Resource = module.cognito_ssm_param.ssm_parameter_arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameters"
+        ]
+        Resource = "arn:aws:ssm:us-east-1:202062340677:*"
       }
     ]
   })
